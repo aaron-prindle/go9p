@@ -5,7 +5,6 @@
 package ufs
 
 import (
-	"flag"
 	"io"
 	"log"
 	"os"
@@ -29,9 +28,9 @@ type Ufs struct {
 	srv.Srv
 }
 
-var addr = flag.String("addr", ":5640", "network address")
-var debug = flag.Int("d", 0, "print debug messages")
-var root = flag.String("root", "/", "root filesystem")
+var addr string
+var debug int
+var root string
 var Enoent = &p.Error{"file not found", p.ENOENT}
 
 func toError(err error) *p.Error {
@@ -174,7 +173,7 @@ func (*Ufs) Attach(req *srv.Req) {
 	tc := req.Tc
 	fid := new(Fid)
 	if len(tc.Aname) == 0 {
-		fid.path = *root
+		fid.path = root
 	} else {
 		fid.path = tc.Aname
 	}
@@ -459,17 +458,16 @@ func lookup(uid string, group bool) (uint32, *p.Error) {
 }
 
 func StartServer(addrVal string, debugVal int, rootVal string) {
-	flag.Parse()
-	flag.Set("addr", addrVal)
-	flag.Set("d", debugVal)
-	flag.Set("root", rootVal)
+	addr = addrVal
+	debug = debugVal
+	root = rootVal
 	ufs := new(Ufs)
 	ufs.Dotu = true
 	ufs.Id = "ufs"
-	ufs.Debuglevel = *debug
+	ufs.Debuglevel = debug
 	ufs.Start(ufs)
 
-	err := ufs.StartNetListener("tcp", *addr)
+	err := ufs.StartNetListener("tcp", addr)
 	if err != nil {
 		log.Println(err)
 	}
